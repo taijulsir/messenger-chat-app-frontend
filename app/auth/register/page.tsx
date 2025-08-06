@@ -47,9 +47,9 @@ export default function RegisterPage() {
       // Send POST request to the backend using the useAxiosInstance hook
       const response = await axiosInstance.post("/auth/register", formData);
 
-      setUser(response.user);
+      setUser(response.data.user);
       // Handle successful registration
-      localStorage.setItem("user", JSON.stringify(response.user));  // Store the JWT token in localStorage
+      localStorage.setItem("user", JSON.stringify(response.data.user));  // Store the JWT token in localStorage
       toast({
         title: "Registration successful",
         description: "Welcome to Messenger!",

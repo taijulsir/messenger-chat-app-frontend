@@ -30,9 +30,9 @@ export default function LoginPage() {
       setIsLoading(true);
       const response = await axiosInstance.post("/auth/login", { email, password });
 
-      setUser(response.user);
+      setUser(response.data.user);
       // Store JWT token in localStorage
-      localStorage.setItem("user", JSON.stringify(response.user));
+      localStorage.setItem("user", JSON.stringify(response.data.user));
 
       setIsLoading(false);
       toast({

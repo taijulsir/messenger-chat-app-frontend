@@ -18,6 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/contexts/auth-context"
 
 const menuItems = [
   {
@@ -51,12 +52,14 @@ export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { toast } = useToast()
+  const {user} = useAuth()
 
   const handleLogout = () => {
     toast({
       title: "Logged out",
       description: "You have been successfully logged out.",
     })
+    localStorage.removeItem("user")
     router.push("/auth/login")
   }
 
@@ -100,8 +103,8 @@ export function AppSidebar() {
             <AvatarFallback>JD</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">John Doe</p>
-            <p className="text-xs text-muted-foreground truncate">john@example.com</p>
+            <p className="text-sm font-medium truncate">{user?.name}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
           </div>
         </div>
         <Button variant="ghost" size="sm" onClick={handleLogout} className="w-full justify-start">

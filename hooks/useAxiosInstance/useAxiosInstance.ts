@@ -9,17 +9,20 @@ export function useAxiosInstance(extraHeaders = {}) {
   const { logout, user } = useAuth();
   const router = useRouter()
 
+  const storedUser = localStorage.getItem("user");
+  const finalUser = user || (storedUser ? JSON.parse(storedUser) : null);
+
   const axiosInstance = useMemo(
     () =>
       axios.create({
         baseURL: "http://localhost:5012/api",
         // import.meta.env.VITE_APP_AXIOS_INSTANCE_ROUTE,
         headers: {
-          Authorization: "Bearer " + user?.token,
+          Authorization: "Bearer " + finalUser?.token,
           ...extraHeaders, // Merge extra headers dynamically
         },
       }),
-    [user]
+    [finalUser]
   );
 
   axiosInstance.interceptors.response.use(
@@ -27,7 +30,7 @@ export function useAxiosInstance(extraHeaders = {}) {
       return res;
     },
     (err) => {
-      if (user?.token && err?.response?.status === 401) {
+      if (finalUser?.token && err?.response?.status === 401) {
         logout();
         router.push("/auth/login");
       } else if (err?.response?.status === 403) {

@@ -50,6 +50,7 @@ export default function SettingsPage() {
       title: "Logged out",
       description: "You have been successfully logged out",
     })
+    localStorage.removeItem("user")
     router.push("/auth/login")
   }
 
