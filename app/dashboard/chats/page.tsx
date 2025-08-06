@@ -55,24 +55,29 @@ const ChatsPage = () => {
     }
   }, [selectedFriend]);
 
-  
-
-  // Listen for real-time incoming messages
+  // Register user with socket and listen for incoming messages and typing events
   useEffect(() => {
-    socket.on('receive_message', (messageData) => {
-      setMessages((prevMessages) => [...prevMessages, messageData]);
-    });
+    if (user) {
+      // Emit the user's token to register with the server
+      socket.emit('register', user._id);
 
-    // Listen for typing event
-    socket.on('typing', (data) => {
-      setTypingIndicator(data.name + " is typing...");
-    });
+      // Listen for incoming messages
+      socket.on('receive_message', (messageData) => {
+        setMessages((prevMessages) => [...prevMessages, messageData]);
+      });
 
-    return () => {
-      socket.off('receive_message');
-      socket.off('typing');
-    };
-  }, []);
+      // Listen for typing indicator
+      socket.on('typing', (data) => {
+        setTypingIndicator(`${data.name} is typing...`);
+      });
+
+      return () => {
+        // Cleanup socket listeners when component unmounts
+        socket.off('receive_message');
+        socket.off('typing');
+      };
+    }
+  }, [user]);
 
   // Handle sending a message
   const handleSendMessage = async () => {
@@ -87,15 +92,15 @@ const ChatsPage = () => {
       socket.emit('send_message', messageData);
 
       // Update the local messages immediately
-      setMessages((prev) => [...prev, { ...messageData, sender: user.name, timestamp: new Date().toLocaleTimeString() }]);
+      setMessages((prev) => [...(prev || []), { ...messageData }]);
 
       // Clear the input field
       setNewMessage("");
-      toast({ title: "Message sent", description: "Your message has been sent" });
+      // toast({ title: "Message sent", description: "Your message has been sent" });
     }
   };
 
-  // Emit typing event
+  // Emit typing event to the server
   const handleTyping = () => {
     if (newMessage.trim()) {
       socket.emit('typing', { name: user.name });
@@ -117,7 +122,7 @@ const ChatsPage = () => {
               <Card
                 key={friend._id}
                 className="p-3 mb-2 cursor-pointer hover:bg-accent transition-colors"
-                onClick={() => setSelectedFriend(friend)}
+                onClick={() => setSelectedFriend(friend?.friendId)}
               >
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
@@ -141,29 +146,33 @@ const ChatsPage = () => {
       {/* Right Panel - Chat View */}
       <div className="flex-1 flex flex-col">
         {/* Chat Header */}
-        <div className="p-4 border-b bg-background">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={selectedFriend?.image || "/placeholder.svg"} />
-              <AvatarFallback>
-                {selectedFriend?.name?.split(" ")[0][0]}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-medium">{selectedFriend?.name}</h3>
-              <p className="text-sm text-muted-foreground">{selectedFriend?.online ? "Online" : "Offline"}</p>
-              <p className="text-xs text-muted-foreground">{typingIndicator}</p>
+        {
+          selectedFriend &&
+          <div className="p-4 border-b bg-background">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={selectedFriend?.image || "/placeholder.svg"} />
+                <AvatarFallback>
+                  {selectedFriend?.name?.split(" ")[0][0]}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="font-medium">{selectedFriend?.name}</h3>
+                <p className="text-sm text-muted-foreground">{selectedFriend?.online ? "Online" : "Offline"}</p>
+                <p className="text-xs text-muted-foreground">{typingIndicator}</p>
+              </div>
             </div>
           </div>
-        </div>
 
+        }
         {/* Messages */}
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
-            {messages.length === 0 ? (
+            {messages?.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">No messages yet</div>
             ) : (
-              messages.map((message, index) => (
+              messages?.length > 0 &&
+              messages?.map((message, index) => (
                 <div key={index} className={message.from === user._id ? "flex-row-reverse" : ""}>
                   <div className="flex gap-3">
                     {message.from !== user._id && (
@@ -201,7 +210,7 @@ const ChatsPage = () => {
                   setNewMessage(e.target.value);
                   handleTyping();
                 }}
-                onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                 className="pr-10"
               />
               <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 transform -translate-y-1/2">
