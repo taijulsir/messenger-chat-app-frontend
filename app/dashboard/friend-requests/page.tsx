@@ -150,7 +150,7 @@ const FriendRequestsPage = () => {
                             <Check className="h-4 w-4 mr-1" />
                             Accept
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleRejectRequest(request?._id)}>
+                          <Button variant="outline" size="sm" onClick={() => handleCancelRequest(request?._id)}>
                             <X className="h-4 w-4 mr-1" />
                             Reject
                           </Button>
