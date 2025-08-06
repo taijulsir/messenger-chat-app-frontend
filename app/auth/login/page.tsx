@@ -10,28 +10,31 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import useAxiosInstance from "@/hooks/useAxiosInstance/useAxiosInstance";
+import { useAxiosInstance } from "@/hooks/useAxiosInstance/useAxiosInstance";
 import Link from "next/link";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { fetchData, loading, error } = useAxiosInstance();  // Using custom hook
+  const [isLoading, setIsLoading] = useState(false);
+  const axiosInstance = useAxiosInstance();  // Using custom hook
   const router = useRouter();
   const { toast } = useToast();
+  const { setUser } = useAuth()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      const response = await fetchData("/auth/login", {
-        method: "POST",
-        data: { email, password },
-      });
+      setIsLoading(true);
+      const response = await axiosInstance.post("/auth/login", { email, password });
 
+      setUser(response.user);
       // Store JWT token in localStorage
-      localStorage.setItem("token", response.token);
+      localStorage.setItem("user", JSON.stringify(response.user));
 
+      setIsLoading(false);
       toast({
         title: "Login successful",
         description: "Welcome back!",
@@ -40,6 +43,7 @@ export default function LoginPage() {
       // Redirect to dashboard after successful login
       router.push("/dashboard/chats");
     } catch (error) {
+      setIsLoading(false);
       toast({
         title: "Login failed",
         description: error.response?.data?.message || "Something went wrong",
@@ -86,8 +90,8 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Signing in..." : "Sign In"}
             </Button>
             <p className="text-sm text-center text-gray-600 dark:text-gray-400">
               {"Don't have an account? "}

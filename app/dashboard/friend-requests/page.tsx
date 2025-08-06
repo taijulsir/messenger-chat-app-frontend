@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from "@/components/ui/ui";
+import { Card, CardContent, CardHeader, CardTitle, Button, Badge, Input } from "@/components/ui/ui";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, X, Clock } from "lucide-react";
@@ -15,22 +15,23 @@ const FriendRequestsPage = () => {
 
   const [incomingRequests, setIncomingRequests] = useState<any[]>([]);
   const [sentRequests, setSentRequests] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
 
+  // Fetch incoming and sent friend requests
   useEffect(() => {
-    // Fetch Incoming Friend Requests
     const fetchIncomingRequests = async () => {
       try {
-        const response = await fetchData("/api/friends/incoming");
+        const response = await fetchData("/friends/incoming");
         setIncomingRequests(response);
       } catch (error) {
         toast({ title: "Error", description: "Failed to fetch incoming requests", variant: "destructive" });
       }
     };
 
-    // Fetch Sent Friend Requests
     const fetchSentRequests = async () => {
       try {
-        const response = await fetchData("/api/friends/sent");
+        const response = await fetchData("/friends/sent");
         setSentRequests(response);
       } catch (error) {
         toast({ title: "Error", description: "Failed to fetch sent requests", variant: "destructive" });
@@ -41,9 +42,27 @@ const FriendRequestsPage = () => {
     fetchSentRequests();
   }, [fetchData]);
 
+  // Fetch users when search query changes
+  useEffect(() => {
+    if (searchQuery.length > 0) {
+      const searchUsers = async () => {
+        try {
+          const response = await fetchData(`/users/search?query=${searchQuery}`);
+          setSearchResults(response);
+        } catch (error) {
+          toast({ title: "Error", description: "Failed to search users", variant: "destructive" });
+        }
+      };
+
+      searchUsers();
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery, fetchData]);
+
   const handleAcceptRequest = async (requestId: string) => {
     try {
-      await fetchData(`/api/friends/${requestId}`, { method: "PUT" });
+      await fetchData(`/friends/${requestId}`, { method: "PUT" });
       setIncomingRequests((prev) => prev.filter((req) => req._id !== requestId));
       toast({ title: "Friend request accepted", description: "You are now friends!" });
     } catch (error) {
@@ -53,7 +72,7 @@ const FriendRequestsPage = () => {
 
   const handleRejectRequest = async (requestId: string) => {
     try {
-      await fetchData(`/api/friends/${requestId}`, { method: "DELETE" });
+      await fetchData(`/friends/${requestId}`, { method: "DELETE" });
       setIncomingRequests((prev) => prev.filter((req) => req._id !== requestId));
       toast({ title: "Friend request rejected", description: "Request has been declined" });
     } catch (error) {
@@ -61,13 +80,12 @@ const FriendRequestsPage = () => {
     }
   };
 
-  const handleCancelRequest = async (requestId: string) => {
+  const handleSendFriendRequest = async (userId: string) => {
     try {
-      await fetchData(`/api/friends/${requestId}`, { method: "DELETE" });
-      setSentRequests((prev) => prev.filter((req) => req._id !== requestId));
-      toast({ title: "Friend request cancelled", description: "You have cancelled the request" });
+      await fetchData("/friends", { method: "POST", data: { from: "userId", to: userId } });
+      toast({ title: "Friend request sent", description: "Your friend request has been sent" });
     } catch (error) {
-      toast({ title: "Error", description: "Failed to cancel the request", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to send the request", variant: "destructive" });
     }
   };
 
@@ -76,6 +94,15 @@ const FriendRequestsPage = () => {
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Friend Requests</CardTitle>
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-64"
+            />
+            <Button onClick={() => handleSendFriendRequest("selectedUserId")}>Send Friend Request</Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="incoming" className="w-full">
@@ -104,13 +131,6 @@ const FriendRequestsPage = () => {
                           <div>
                             <h3 className="font-medium">{request.name}</h3>
                             <p className="text-sm text-muted-foreground">{request.email}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="secondary">{request.mutualFriends} mutual friends</Badge>
-                              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {request.timestamp}
-                              </span>
-                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -145,10 +165,6 @@ const FriendRequestsPage = () => {
                           <div>
                             <h3 className="font-medium">{request.name}</h3>
                             <p className="text-sm text-muted-foreground">{request.email}</p>
-                            <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                              <Clock className="h-3 w-3" />
-                              Sent {request.timestamp}
-                            </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">

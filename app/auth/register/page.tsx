@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import useAxiosInstance from "@/hooks/useAxiosInstance/useAxiosInstance";
+import {useAxiosInstance} from "@/hooks/useAxiosInstance/useAxiosInstance";
 import Link from "next/link";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -23,7 +24,9 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const { fetchData, loading } = useAxiosInstance();  // Using custom hook
+  const axiosInstance = useAxiosInstance();  // Using custom hook
+
+  const { setUser } = useAuth()
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,13 +45,11 @@ export default function RegisterPage() {
 
     try {
       // Send POST request to the backend using the useAxiosInstance hook
-      const response = await fetchData("/auth/register", {
-        method: "POST",
-        data: formData,  // Send form data to the backend
-      });
+      const response = await axiosInstance.post("/auth/register", formData);
 
+      setUser(response.user);
       // Handle successful registration
-      localStorage.setItem("token", response.token);  // Store the JWT token in localStorage
+      localStorage.setItem("user", JSON.stringify(response.user));  // Store the JWT token in localStorage
       toast({
         title: "Registration successful",
         description: "Welcome to Messenger!",
