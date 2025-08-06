@@ -59,7 +59,7 @@ export default function FriendsPage() {
                     <div className="flex items-center gap-4">
                       <div className="relative">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={friend?.friendId?.avatar || "/placeholder.svg"} />
+                          <AvatarImage src={friend?.friendId?.image || "/placeholder.svg"} />
                           <AvatarFallback>
                             {friend?.friendId?.name
                               .split(" ")

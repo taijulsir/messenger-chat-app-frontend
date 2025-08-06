@@ -133,7 +133,7 @@ export default function CreateGroupPage() {
                       onCheckedChange={() => handleFriendToggle(friend.id)}
                     />
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={friend.avatar || "/placeholder.svg"} />
+                      <AvatarImage src={friend.image || "/placeholder.svg"} />
                       <AvatarFallback>
                         {friend.name
                           .split(" ")

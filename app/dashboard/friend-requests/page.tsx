@@ -137,7 +137,7 @@ const FriendRequestsPage = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <Avatar className="h-12 w-12">
-                            <AvatarImage src={request?.avatar || "/placeholder.svg"} />
+                            <AvatarImage src={request?.from?.image || "/placeholder.svg"} />
                             <AvatarFallback>{request?.from?.name.split(" ")[0][0]}</AvatarFallback>
                           </Avatar>
                           <div>
@@ -171,8 +171,8 @@ const FriendRequestsPage = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <Avatar className="h-12 w-12">
-                            <AvatarImage src={request?.avatar || "/placeholder.svg"} />
-                            <AvatarFallback>{request?.name?.split(" ")[0][0]}</AvatarFallback>
+                            <AvatarImage src={request?.to?.image || "/placeholder.svg"} />
+                            <AvatarFallback>{request?.to?.name?.split(" ")[0][0]}</AvatarFallback>
                           </Avatar>
                           <div>
                             <h3 className="font-medium">{request?.to?.name}</h3>
@@ -211,7 +211,7 @@ const FriendRequestsPage = () => {
                 <Card key={user?._id} className="p-4 cursor-pointer" onClick={() => setSelectedUser(user)}>
                   <div className="flex items-center gap-4">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={user?.avatar || "/placeholder.svg"} />
+                      <AvatarImage src={user?.image || "/placeholder.svg"} />
                       <AvatarFallback>{user?.name.split(" ")[0][0]}</AvatarFallback>
                     </Avatar>
                     <div>
