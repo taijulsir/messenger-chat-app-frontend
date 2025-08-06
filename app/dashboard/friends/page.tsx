@@ -1,56 +1,38 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Search, MessageCircle, Phone, Video } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-
-const friends = [
-  {
-    id: 1,
-    name: "Alice Johnson",
-    email: "alice@example.com",
-    avatar: "/placeholder.svg?height=40&width=40",
-    online: true,
-    lastSeen: "Online",
-  },
-  {
-    id: 2,
-    name: "Bob Smith",
-    email: "bob@example.com",
-    avatar: "/placeholder.svg?height=40&width=40",
-    online: false,
-    lastSeen: "2 hours ago",
-  },
-  {
-    id: 3,
-    name: "Carol Davis",
-    email: "carol@example.com",
-    avatar: "/placeholder.svg?height=40&width=40",
-    online: true,
-    lastSeen: "Online",
-  },
-  {
-    id: 4,
-    name: "David Wilson",
-    email: "david@example.com",
-    avatar: "/placeholder.svg?height=40&width=40",
-    online: false,
-    lastSeen: "1 day ago",
-  },
-]
+import { useAxiosInstance } from "@/hooks/useAxiosInstance/useAxiosInstance"
+import { MessageCircle, Phone, Search, Video } from "lucide-react"
+import { useEffect, useState } from "react"
 
 export default function FriendsPage() {
   const [searchQuery, setSearchQuery] = useState("")
+  const [friends, setFriends] = useState([])
+  const axiosInstance = useAxiosInstance()
+
+  // Fetch friends data from API
+  useEffect(() => {
+    async function fetchFriends() {
+      try {
+        const response = await axiosInstance.get("/friends/myFrineds")
+        setFriends(response.data)
+      } catch (error) {
+        console.error("Error fetching friends:", error)
+      }
+    }
+
+    fetchFriends()
+  }, [])
 
   const filteredFriends = friends.filter(
     (friend) =>
-      friend.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      friend.email.toLowerCase().includes(searchQuery.toLowerCase()),
+      friend?.friendId?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      friend?.friendId?.email.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
   return (
@@ -72,28 +54,28 @@ export default function FriendsPage() {
           <ScrollArea className="h-[calc(100vh-16rem)]">
             <div className="grid gap-4">
               {filteredFriends.map((friend) => (
-                <Card key={friend.id} className="p-4">
+                <Card key={friend?._id} className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="relative">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={friend.avatar || "/placeholder.svg"} />
+                          <AvatarImage src={friend?.friendId?.avatar || "/placeholder.svg"} />
                           <AvatarFallback>
-                            {friend.name
+                            {friend?.friendId?.name
                               .split(" ")
                               .map((n) => n[0])
                               .join("")}
                           </AvatarFallback>
                         </Avatar>
-                        {friend.online && (
+                        {friend?.friendId?.online && (
                           <div className="absolute bottom-0 right-0 h-4 w-4 bg-green-500 border-2 border-background rounded-full" />
                         )}
                       </div>
                       <div>
-                        <h3 className="font-medium">{friend.name}</h3>
-                        <p className="text-sm text-muted-foreground">{friend.email}</p>
+                        <h3 className="font-medium">{friend?.friendId?.name}</h3>
+                        <p className="text-sm text-muted-foreground">{friend?.friendId?.email}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge variant={friend.online ? "default" : "secondary"}>{friend.lastSeen}</Badge>
+                          <Badge variant={friend?.online ? "default" : "secondary"}>{friend?.lastSeen}</Badge>
                         </div>
                       </div>
                     </div>
