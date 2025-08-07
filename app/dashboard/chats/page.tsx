@@ -169,7 +169,9 @@ const ChatsPage = () => {
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
             {messages?.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">No messages yet</div>
+              <div className="text-center py-8 text-muted-foreground flex items-center justify-center h-[90vh]">
+               <p className="text-2xl font-bold">Select a friend to start chatting</p>
+              </div>
             ) : (
               messages?.length > 0 &&
               messages?.map((message, index) => (
@@ -197,31 +199,34 @@ const ChatsPage = () => {
         </ScrollArea>
 
         {/* Message Input */}
-        <div className="p-4 border-t bg-background">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon">
-              <Paperclip className="h-4 w-4" />
-            </Button>
-            <div className="flex-1 relative">
-              <Input
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={(e) => {
-                  setNewMessage(e.target.value);
-                  handleTyping();
-                }}
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                className="pr-10"
-              />
-              <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 transform -translate-y-1/2">
-                <Smile className="h-4 w-4" />
+        {
+          selectedFriend &&
+          <div className="p-4 border-t bg-background">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon">
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              <div className="flex-1 relative">
+                <Input
+                  placeholder="Type a message..."
+                  value={newMessage}
+                  onChange={(e) => {
+                    setNewMessage(e.target.value);
+                    handleTyping();
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                  className="pr-10"
+                />
+                <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 transform -translate-y-1/2">
+                  <Smile className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+                <Send className="h-4 w-4" />
               </Button>
             </div>
-            <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
-              <Send className="h-4 w-4" />
-            </Button>
           </div>
-        </div>
+        }
       </div>
     </div>
   );
