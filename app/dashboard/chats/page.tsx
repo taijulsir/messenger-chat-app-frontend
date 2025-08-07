@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -24,6 +24,10 @@ const ChatsPage = () => {
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [typingIndicator, setTypingIndicator] = useState<string>("");
+  const messagesEndRef = useRef<any>(null);
+  const chatContainerRef = useRef<any>(null);
+  const [isAtBottom, setIsAtBottom] = useState<boolean>(true);
+
 
   // Fetch the user's friends
   useEffect(() => {
@@ -63,7 +67,11 @@ const ChatsPage = () => {
 
       // Listen for incoming messages
       socket.on('receive_message', (messageData) => {
+        // If the user is at the bottom, scroll to the bottom automatically
         setMessages((prevMessages) => [...prevMessages, messageData]);
+        if (isAtBottom) {
+          scrollToBottom();
+        }
       });
 
       // Listen for typing indicator
@@ -77,7 +85,7 @@ const ChatsPage = () => {
         socket.off('typing');
       };
     }
-  }, [user]);
+  }, [user, isAtBottom]);
 
   // Handle sending a message
   const handleSendMessage = async () => {
@@ -86,6 +94,7 @@ const ChatsPage = () => {
         from: user._id,
         to: selectedFriend._id,
         content: newMessage,
+        timestamp: Date.now(),
       };
 
       // Emit the message to the server
@@ -110,6 +119,10 @@ const ChatsPage = () => {
 
       }]);
 
+      // Scroll to bottom after sending the message
+      scrollToBottom();
+      console.log('scroll ar niche')
+
       // Clear the input field
       setNewMessage("");
       // toast({ title: "Message sent", description: "Your message has been sent" });
@@ -124,6 +137,49 @@ const ChatsPage = () => {
       setTypingIndicator("");
     }
   };
+
+  // Scroll to bottom if the user is at the bottom
+  // const scrollToBottom = () => {
+  //   console.log("hae function call hoiche")
+  //   const chatContainer = chatContainerRef.current;
+  //   if (chatContainer) {
+  //     const isAtBottom = chatContainer.scrollHeight === chatContainer.scrollTop + chatContainer.clientHeight;
+  //     console.log("isAtBottom", isAtBottom)
+  //     setIsAtBottom(isAtBottom);
+  //   }
+
+  //   if (isAtBottom) {
+  //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  //   }
+  // };
+
+  // Automatically scroll to bottom when new messages arrive or chat is opened
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages, selectedFriend]);
+
+  // Track if the user manually scrolls up
+  // Scroll to the bottom
+  const scrollToBottom = () => {
+    const chatContainer = chatContainerRef.current;
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  };
+
+  // Track if the user is at the bottom when scrolling manually
+  const handleScroll = () => {
+    const chatContainer = chatContainerRef.current;
+    if (chatContainer) {
+      const isAtBottom =
+        chatContainer.scrollHeight === chatContainer.scrollTop + chatContainer.clientHeight;
+      setIsAtBottom(isAtBottom);
+    }
+  };
+
+
 
   return (
     <div className="flex h-[calc(100vh-4rem)]">
@@ -181,14 +237,16 @@ const ChatsPage = () => {
           </div>
 
         }
+
         {/* Messages */}
-        <ScrollArea className="flex-1 p-4 overflow-scroll">
+        <div className="flex-1 p-4 overflow-scroll" ref={chatContainerRef} onScroll={handleScroll}>
           <div className="space-y-4">
             {messages?.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground flex items-center justify-center h-[90vh]">
                 <p className="text-2xl font-bold">Select a friend to start chatting</p>
               </div>
             ) : (
+              selectedFriend &&
               messages?.length > 0 &&
               messages?.map((message, index) => (
                 <div key={index} className={message.from._id === user._id ? "flex-row-reverse" : ""}>
@@ -202,8 +260,7 @@ const ChatsPage = () => {
                       </Avatar>
                     )}
                     <div className="flex flex-col">
-                      {/* <div className={message.from === user._id ? "bg-blue-500 text-white" : "bg-muted px-4 py-2 rounded-lg"}> */}
-                      <div className="bg-muted px-4 py-2 rounded-lg">
+                      <div className={`px-4 py-2 rounded-lg ${message.from._id === user._id ? "bg-blue-500 text-white" : "bg-muted"}`}>
                         <p className="text-sm">{message.content}</p>
                       </div>
                       <span className="text-xs text-muted-foreground mt-1">
@@ -214,15 +271,16 @@ const ChatsPage = () => {
                           day: '2-digit',
                           month: 'short',
                           year: 'numeric',
-                        }): ''}
+                        }) : ''}
                       </span>
                     </div>
                   </div>
                 </div>
               ))
             )}
+            <div ref={messagesEndRef}></div>
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Message Input */}
         {
