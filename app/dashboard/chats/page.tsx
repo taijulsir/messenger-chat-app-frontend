@@ -92,7 +92,23 @@ const ChatsPage = () => {
       socket.emit('send_message', messageData);
 
       // Update the local messages immediately
-      setMessages((prev) => [...(prev || []), { ...messageData }]);
+      setMessages((prev) => [...(prev || []), {
+        from: {
+          _id: user._id,
+          name: user.name,
+          image: user.image,
+          online: true,
+        },
+        to: {
+          _id: selectedFriend._id,
+          name: selectedFriend.name,
+          image: selectedFriend.image,
+          online: true,
+        },
+        content: newMessage,
+        timestamp: Date.now(),
+
+      }]);
 
       // Clear the input field
       setNewMessage("");
@@ -166,18 +182,18 @@ const ChatsPage = () => {
 
         }
         {/* Messages */}
-        <ScrollArea className="flex-1 p-4">
+        <ScrollArea className="flex-1 p-4 overflow-scroll">
           <div className="space-y-4">
             {messages?.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground flex items-center justify-center h-[90vh]">
-               <p className="text-2xl font-bold">Select a friend to start chatting</p>
+                <p className="text-2xl font-bold">Select a friend to start chatting</p>
               </div>
             ) : (
               messages?.length > 0 &&
               messages?.map((message, index) => (
-                <div key={index} className={message.from === user._id ? "flex-row-reverse" : ""}>
-                  <div className="flex gap-3">
-                    {message.from !== user._id && (
+                <div key={index} className={message.from._id === user._id ? "flex-row-reverse" : ""}>
+                  <div className={`flex gap-3 ${message.from._id === user._id ? "justify-end" : "justify-start"}`}>
+                    {message.from._id !== user._id && (
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={selectedFriend?.image || "/placeholder.svg"} />
                         <AvatarFallback>
@@ -186,10 +202,20 @@ const ChatsPage = () => {
                       </Avatar>
                     )}
                     <div className="flex flex-col">
-                      <div className={message.from === user._id ? "bg-blue-500 text-white" : "bg-muted px-4 py-2 rounded-lg"}>
+                      {/* <div className={message.from === user._id ? "bg-blue-500 text-white" : "bg-muted px-4 py-2 rounded-lg"}> */}
+                      <div className="bg-muted px-4 py-2 rounded-lg">
                         <p className="text-sm">{message.content}</p>
                       </div>
-                      <span className="text-xs text-muted-foreground mt-1">{message?.timestamp}</span>
+                      <span className="text-xs text-muted-foreground mt-1">
+                        {message?.timestamp ? new Date(message?.timestamp)?.toLocaleString('en-GB', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true,
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        }): ''}
+                      </span>
                     </div>
                   </div>
                 </div>
