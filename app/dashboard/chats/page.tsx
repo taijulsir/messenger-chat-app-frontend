@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useAxiosInstance } from "@/hooks/useAxiosInstance/useAxiosInstance"
 import { useAuth } from "@/contexts/auth-context"
 import socket from "@/utils/sockets"
+import { formatLastActive } from "./utils/formatActiveTime"
 
 const ChatsPage = () => {
   const axiosInstance = useAxiosInstance();
@@ -22,11 +23,12 @@ const ChatsPage = () => {
   const [selectedFriend, setSelectedFriend] = useState<any | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const [typingIndicator, setTypingIndicator] = useState<string>("");
   const messagesEndRef = useRef<any>(null);
   const chatContainerRef = useRef<any>(null);
   const [isAtBottom, setIsAtBottom] = useState<boolean>(true);
+  const [userStatus, setUserStatus] = useState<{ [key: string]: { status: string, lastActive: Date } }>({});
+
 
 
   // Fetch the user's friends
@@ -78,13 +80,24 @@ const ChatsPage = () => {
       socket.on('typing', (data) => {
         if (user?._id === data.to) {
           setTypingIndicator(`${data.name} is typing...`);
+          if (isAtBottom) {
+            scrollToBottom();
+          }
         }
+      });
+
+      socket.on("user_status", (data) => {
+        setUserStatus((prevStatus) => ({
+          ...prevStatus,
+          [data.userId]: { status: data.status, lastActive: data.lastActive }
+        }));
       });
 
       return () => {
         // Cleanup socket listeners when component unmounts
         socket.off('receive_message');
         socket.off('typing');
+        socket.off("user_status");
       };
     }
   }, [user, isAtBottom]);
@@ -127,6 +140,9 @@ const ChatsPage = () => {
       // Clear the input field
       setNewMessage("");
       // toast({ title: "Message sent", description: "Your message has been sent" });
+
+      // Clear typing indicator once the message is sent
+      setTypingIndicator("");
     }
   };
 
@@ -134,9 +150,6 @@ const ChatsPage = () => {
   const handleTyping = () => {
     if (newMessage.trim()) {
       socket.emit('typing', { name: user.name, to: selectedFriend._id });
-      if (isAtBottom) {
-        scrollToBottom()
-      }
     } else {
       setTypingIndicator("");
     }
@@ -149,6 +162,13 @@ const ChatsPage = () => {
       scrollToBottom();
     }
   }, [messages, selectedFriend]);
+
+  // Whenever the user clears the input, stop typing indicator
+  useEffect(() => {
+    if (!newMessage.trim()) {
+      setTypingIndicator(""); // Reset typing indicator if input is empty
+    }
+  }, [newMessage]);
 
   // Track if the user manually scrolls up
   // Scroll to the bottom
@@ -168,6 +188,8 @@ const ChatsPage = () => {
       setIsAtBottom(isAtBottom);
     }
   };
+
+  // console.log(userStatus);
 
 
 
@@ -196,6 +218,7 @@ const ChatsPage = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <h3 className="font-medium truncate">{friend?.friendId?.name}</h3>
+
                     </div>
                   </div>
                 </div>
@@ -220,7 +243,18 @@ const ChatsPage = () => {
               </Avatar>
               <div>
                 <h3 className="font-medium">{selectedFriend?.name}</h3>
-                <p className="text-sm text-muted-foreground">{selectedFriend?.online ? "Online" : "Offline"}</p>
+                {/* Show online/offline status */}
+                {userStatus[selectedFriend._id]?.status === "online" ? (
+                  <>
+                    {/* <div className="w-2.5 h-2.5 bg-green-500 rounded-full"></div> */}
+                    <p>Active Now</p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {formatLastActive(userStatus[selectedFriend._id]?.lastActive || selectedFriend?.lastActive)}
+                  </p>
+                )}
+                {/* <p className="text-sm text-muted-foreground">{selectedFriend?.online ? "Online" : "Offline"}</p> */}
                 {/* <p className="text-xs text-muted-foreground">{typingIndicator}</p> */}
               </div>
             </div>
@@ -269,6 +303,7 @@ const ChatsPage = () => {
               ))
             )}
             {
+              selectedFriend &&
               typingIndicator && (
                 <div className="flex items-center gap-2 mt-4">
                   <Avatar className="h-8 w-8">
@@ -277,8 +312,8 @@ const ChatsPage = () => {
                   </Avatar>
                   <div className="flex items-center gap-1 bg-white h-8 w-10 rounded-lg">
                     <div className="w-2.5 h-2.5 bg-gray-300 rounded-full animate-bounce animation-delay-0" />
-                    <div className="w-2.5 h-2.5 bg-gray-300 rounded-full animate-bounce animation-delay-0.1s" />
-                    <div className="w-2.5 h-2.5 bg-gray-300 rounded-full animate-bounce animation-delay-0.2s" />
+                    <div className="w-2.5 h-2.5 bg-gray-300 rounded-full animate-bounce animation-delay-01s" />
+                    <div className="w-2.5 h-2.5 bg-gray-300 rounded-full animate-bounce animation-delay-02s" />
                   </div>
                 </div>
               )
