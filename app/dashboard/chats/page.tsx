@@ -76,7 +76,9 @@ const ChatsPage = () => {
 
       // Listen for typing indicator
       socket.on('typing', (data) => {
-        setTypingIndicator(`${data.name} is typing...`);
+        if (user?._id === data.to) {
+          setTypingIndicator(`${data.name} is typing...`);
+        }
       });
 
       return () => {
@@ -121,7 +123,6 @@ const ChatsPage = () => {
 
       // Scroll to bottom after sending the message
       scrollToBottom();
-      console.log('scroll ar niche')
 
       // Clear the input field
       setNewMessage("");
@@ -132,26 +133,15 @@ const ChatsPage = () => {
   // Emit typing event to the server
   const handleTyping = () => {
     if (newMessage.trim()) {
-      socket.emit('typing', { name: user.name });
+      socket.emit('typing', { name: user.name, to: selectedFriend._id });
+      if (isAtBottom) {
+        scrollToBottom()
+      }
     } else {
       setTypingIndicator("");
     }
   };
 
-  // Scroll to bottom if the user is at the bottom
-  // const scrollToBottom = () => {
-  //   console.log("hae function call hoiche")
-  //   const chatContainer = chatContainerRef.current;
-  //   if (chatContainer) {
-  //     const isAtBottom = chatContainer.scrollHeight === chatContainer.scrollTop + chatContainer.clientHeight;
-  //     console.log("isAtBottom", isAtBottom)
-  //     setIsAtBottom(isAtBottom);
-  //   }
-
-  //   if (isAtBottom) {
-  //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  //   }
-  // };
 
   // Automatically scroll to bottom when new messages arrive or chat is opened
   useEffect(() => {
@@ -231,7 +221,7 @@ const ChatsPage = () => {
               <div>
                 <h3 className="font-medium">{selectedFriend?.name}</h3>
                 <p className="text-sm text-muted-foreground">{selectedFriend?.online ? "Online" : "Offline"}</p>
-                <p className="text-xs text-muted-foreground">{typingIndicator}</p>
+                {/* <p className="text-xs text-muted-foreground">{typingIndicator}</p> */}
               </div>
             </div>
           </div>
@@ -246,8 +236,8 @@ const ChatsPage = () => {
                 <p className="text-2xl font-bold">Select a friend to start chatting</p>
               </div>
             ) : (
-              selectedFriend &&
-              messages?.length > 0 &&
+              (selectedFriend &&
+                messages?.length > 0) &&
               messages?.map((message, index) => (
                 <div key={index} className={message.from._id === user._id ? "flex-row-reverse" : ""}>
                   <div className={`flex gap-3 ${message.from._id === user._id ? "justify-end" : "justify-start"}`}>
@@ -278,6 +268,22 @@ const ChatsPage = () => {
                 </div>
               ))
             )}
+            {
+              typingIndicator && (
+                <div className="flex items-center gap-2 mt-4">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={selectedFriend?.image || "/placeholder.svg"} />
+                    <AvatarFallback>{selectedFriend?.name.split(" ")[0][0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex items-center gap-1 bg-white h-8 w-10 rounded-lg">
+                    <div className="w-2.5 h-2.5 bg-gray-300 rounded-full animate-bounce animation-delay-0" />
+                    <div className="w-2.5 h-2.5 bg-gray-300 rounded-full animate-bounce animation-delay-0.1s" />
+                    <div className="w-2.5 h-2.5 bg-gray-300 rounded-full animate-bounce animation-delay-0.2s" />
+                  </div>
+                </div>
+              )
+            }
+
             <div ref={messagesEndRef}></div>
           </div>
         </div>
